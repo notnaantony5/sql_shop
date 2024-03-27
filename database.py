@@ -53,7 +53,7 @@ class Database:
             """
             self.__settings = settings
 
-        def __enter__(self: "Database.Connection") -> None:
+        def __enter__(self: "Database.Connection") -> object:
             """Создание подключения."""
             self._connection = psycopg2.connect(
                 host=self.__settings.host,
@@ -62,6 +62,7 @@ class Database:
                 user=self.__settings.user,
                 password=self.__settings.password,
             )
+            return self._connection
 
         def __exit__(self: "Database.Connection", *args: object) -> None:
             """Закрытие подключения."""
