@@ -39,3 +39,17 @@ order_number INTEGER UNIQUE NOT NULL,
 consumer_name VARCHAR(50) NOT NULL
 )
 """
+rack_product_link_create = """
+CREATE TABLE IF NOT EXIST rack_product_link (
+id SERIAL PRIMARY KEY,
+rack_id INTEGER NOT NULL,
+product_id INTEGER NOT NULL,
+main BOOLEAN NOT NULL,
+
+CONSTRAINT FK_link_rack_product FOREIGN KEY(rack_id)
+REFERENCES rack(id)
+
+CONSTRAINT FK_link_product_rack FOREIGN KEY(product_id)
+REFERENCES product(id)
+)
+"""
