@@ -13,9 +13,9 @@ if ENV_PATH.is_file():
     env.read_envfile(ENV_PATH)
 
 settings = DatabaseSettings(
-    host=env.str("DB_HOST", ""),
-    port=env.int("DB_PORT", 0),
-    db=env.str("DB_NAME", ""),
-    user=env.str("DB_USER", ""),
-    password=env.str("DB_PASSWORD", ""),
+    host=env.str("POSTGRES_HOST"),
+    port=env.int("POSTGRES_PORT"),
+    db=env.str("POSTGRES_DB"),
+    user=env.str("POSTGRES_USER"),
+    password=env.str("POSTGRES_PASSWORD"),
 )
