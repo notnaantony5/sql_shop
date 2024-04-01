@@ -47,9 +47,23 @@ product_id INTEGER NOT NULL,
 main BOOLEAN NOT NULL,
 
 CONSTRAINT FK_link_rack_product FOREIGN KEY(rack_id)
-REFERENCES rack(id)
+REFERENCES rack(id),
 
 CONSTRAINT FK_link_product_rack FOREIGN KEY(product_id)
+REFERENCES product(id)
+)
+"""
+order_product_link_create = """
+CREATE TABLE IF NOT EXIST order_product_link (
+id SERIAL PRIMARY KEY,
+order_id INTEGER NOT NULL,
+product_id INTEGER NOT NULL,
+count INTEGER NOT NULL,
+
+CONSTRAINT FK_link_order_product FOREIGN KEY(order_id)
+REFERENCES order(id),
+
+CONSTRAINT FK_link_product_order FOREIGN KEY(product_id)
 REFERENCES product(id)
 )
 """
