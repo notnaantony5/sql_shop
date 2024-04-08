@@ -90,6 +90,20 @@ class Rack(BaseModel):
             data = cur.fetchone()
             return Rack(*data)
 
+    def __str__(self: "Rack") -> str:
+        """Строковое представление.
+
+        Args:
+        ----
+            self (Rack): стеллаж.
+
+        Returns:
+        -------
+            str: строковое представление.
+
+        """
+        return f"Стеллаж {self.name}"
+
 
 class Order(BaseModel):
     """Класс, представлющий заказ."""
@@ -142,6 +156,20 @@ class Order(BaseModel):
             data = cur.fetchone()
             return Order(*data)
 
+    def __str__(self: "Order") -> str:
+        """Строковое представление.
+
+        Args:
+        ----
+            self (Order): заказ.
+
+        Returns:
+        -------
+            str: строковое представление.
+
+        """
+        return f"Заказ №{self.order_number}"
+
 
 class Product(BaseModel):
     """Класс, представлющий товар."""
@@ -188,6 +216,20 @@ class Product(BaseModel):
             cur.execute(sql_command, (value,))
             data = cur.fetchone()
             return Product(*data)
+
+    def __str__(self: "Product") -> str:
+        """Строковое представление.
+
+        Args:
+        ----
+            self (Product): товар.
+
+        Returns:
+        -------
+            str: строковое представление.
+
+        """
+        return f"Товар {self.name}"
 
 
 class OrderProductLink(BaseModelLink):
@@ -280,7 +322,7 @@ class RackProductLink(BaseModelLink):
     def get_all_by(
         field: Literal["rack_id", "product_id"],
         value: int,
-    ) -> list["OrderProductLink"]:
+    ) -> list["RackProductLink"]:
         """Получить по названию поля и значению запись из БД.
 
         Args:

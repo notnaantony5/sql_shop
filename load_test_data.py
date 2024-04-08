@@ -57,6 +57,14 @@ VALUES (
     %s
     )
 """
+order_product_link_insert = """
+INSERT INTO order_product_link(order_id, product_id, count)
+VALUES (
+    (SELECT id FROM ordert WHERE ordert.order_number = %s),
+    (SELECT id FROM product WHERE product.article = %s),
+    %s
+    )
+"""
 rack_product_link_insert_values = [
     ("А", 1, True),
     ("А", 2, True),
@@ -68,6 +76,16 @@ rack_product_link_insert_values = [
     ("Ж", 6, True),
 ]
 
+order_product_link_insert_values = [
+    (10, 1, 2),
+    (11, 2, 3),
+    (14, 1, 3),
+    (10, 3, 1),
+    (14, 4, 4),
+    (15, 5, 1),
+    (10, 6, 1),
+]
+
 
 def load() -> None:
     """Основная функция модуля."""
@@ -76,7 +94,11 @@ def load() -> None:
     execute_many_command(order_insert, order_insert_values)
     execute_many_command(product_insert, product_insert_values)
     execute_many_command(
-        rack_product_link_insert, rack_product_link_insert_values,
+        rack_product_link_insert,
+        rack_product_link_insert_values,
+    )
+    execute_many_command(
+        order_product_link_insert, order_product_link_insert_values,
     )
 
 
