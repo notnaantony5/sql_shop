@@ -51,13 +51,16 @@ class View:
         order_product: dict[int, list[Product]] = {
             number: [
                 (Product.get_by("id", link.product_id), link.count)
+                # собираем список кортежей c продуктами
+                # и их количеством для заказа
                 for link in OrderProductLink.get_all_by(
                     "order_id",
                     Order.get_by("order_number", number).id,
-                )
+                )  # получаем обьект линка по внутреннему id заказа
             ]
             for number in self.order_numbers
         }
+        # {10: [(Ноутбук, 2), (Телефон, 1) ...]}
         racks = [
             (
                 Rack.get_by("id", link.rack_id).name,
@@ -74,14 +77,16 @@ class View:
                 ],
             )
             for number, products in order_product.items()
-            for product, count in products
+            # (10, [(Ноутбук, 2), ....])
+            for product, count in products  # (Ноутбук, 2)
             for link in RackProductLink.get_all_by("product_id", product.id)
+            # Ноутбук может лежать на стеллаже
+            # А, c доп стеллажами З В  # noqa: RUF003
             if link.main
         ]
-        print(racks)
         result = {}
         for rack, product, number, count, an_racks in racks:
-            if rack in result:
+            if rack in result:  # группируем по стелажу
                 result[rack].append(
                     (rack, product, number, count, an_racks),
                 )
