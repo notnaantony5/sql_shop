@@ -116,7 +116,3 @@ class View:
             f"{', '.join(map(str,self.order_numbers))}\n\n"
             f"{self.rackviews}"
         )
-
-
-v = View([10, 11, 14, 15])
-print(v)
