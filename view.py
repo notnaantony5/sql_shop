@@ -15,8 +15,30 @@ class View:
             order_numbers (list[int]): _description_.
 
         """
+        n = "\n"
         self.order_numbers = order_numbers
         self.racks = self._get_racks()
+        self.racks = [
+            n.join(
+                [
+                    f"===Стеллаж {rack}\n"
+                    + n.join(
+                        [
+                            f"{product.name} (art={product.article})\n"
+                            f"заказ {number}, {count} шт.\n"
+                            + (
+                                f"доп стеллаж: {', '.join(an_racks)}\n"
+                                if an_racks
+                                else ""
+                            )
+                            for _, product, number, count, an_racks in products
+                        ],
+                    )
+                    for rack, products in self.racks.items()
+                ],
+            ),
+        ]
+        self.rackviews = "".join(self.racks)
 
     def _get_racks(self: "View") -> dict:
         """_summary_.
@@ -43,7 +65,7 @@ class View:
                 number,
                 count,
                 [
-                    Rack.get_by("id", link.id).name
+                    Rack.get_by("id", link.rack_id).name
                     for link in RackProductLink.get_all_by(
                         "product_id",
                         product.id,
@@ -61,15 +83,15 @@ class View:
         for rack, product, number, count, an_racks in racks:
             if rack in result:
                 result[rack].append(
-                    (rack, str(product), str(number), count, an_racks),
+                    (rack, product, number, count, an_racks),
                 )
             else:
                 result[rack] = [
-                    (rack, str(product), str(number), count, an_racks),
+                    (rack, product, number, count, an_racks),
                 ]
         for products in result.values():
             products.sort(key=lambda x: x[2])
-        print(result)
+        return result
 
     def __str__(self: "View") -> str:
         """dfhdfh.
@@ -83,12 +105,13 @@ class View:
             _type_: _description_.
 
         """
-        n = "\n"
         return (
             f"=+=+=+=\n"
-            f"Страница сборки заказов {', '.join(self.order_numbers)}\n\n"
-            f"{n.join(self.rackviews)}"
+            f"Страница сборки заказов "
+            f"{', '.join(map(str,self.order_numbers))}\n\n"
+            f"{self.rackviews}"
         )
 
 
 v = View([10, 11, 14, 15])
+print(v)

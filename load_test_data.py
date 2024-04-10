@@ -68,6 +68,7 @@ VALUES (
 rack_product_link_insert_values = [
     ("А", 1, True),
     ("А", 2, True),
+    ("А", 5, False),
     ("Б", 3, True),
     ("З", 3, False),
     ("В", 3, False),
@@ -98,7 +99,8 @@ def load() -> None:
         rack_product_link_insert_values,
     )
     execute_many_command(
-        order_product_link_insert, order_product_link_insert_values,
+        order_product_link_insert,
+        order_product_link_insert_values,
     )
 
 
