@@ -28,7 +28,7 @@ class View:
         """
         order_product: dict[int, list[Product]] = {
             number: [
-                Product.get_by("id", link.product_id)
+                (Product.get_by("id", link.product_id), link.count)
                 for link in OrderProductLink.get_all_by(
                     "order_id",
                     Order.get_by("order_number", number).id,
@@ -36,19 +36,26 @@ class View:
             ]
             for number in self.order_numbers
         }
-        print(order_product)
         racks = [
-            (Rack.get_by("id", link.rack_id).name, product, number)
+            (
+                Rack.get_by("id", link.rack_id).name,
+                product,
+                number,
+                count,
+                link.main,
+            )
             for number, products in order_product.items()
-            for product in products
+            for product, count in products
             for link in RackProductLink.get_all_by("product_id", product.id)
         ]
         result = {}
-        for rack, product, number in racks:
+        for rack, product, number, count, main in racks:
             if rack in result:
-                result[rack].append((rack, str(product), str(number)))
+                result[rack].append(
+                    (rack, str(product), str(number), count, main),
+                )
             else:
-                result[rack] = [(rack, str(product), str(number))]
+                result[rack] = [(rack, str(product), str(number), count, main)]
         for products in result.values():
             products.sort(key=lambda x: x[2])
         print(result)
