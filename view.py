@@ -42,20 +42,31 @@ class View:
                 product,
                 number,
                 count,
-                link.main,
+                [
+                    Rack.get_by("id", link.id).name
+                    for link in RackProductLink.get_all_by(
+                        "product_id",
+                        product.id,
+                    )
+                    if not link.main
+                ],
             )
             for number, products in order_product.items()
             for product, count in products
             for link in RackProductLink.get_all_by("product_id", product.id)
+            if link.main
         ]
+        print(racks)
         result = {}
-        for rack, product, number, count, main in racks:
+        for rack, product, number, count, an_racks in racks:
             if rack in result:
                 result[rack].append(
-                    (rack, str(product), str(number), count, main),
+                    (rack, str(product), str(number), count, an_racks),
                 )
             else:
-                result[rack] = [(rack, str(product), str(number), count, main)]
+                result[rack] = [
+                    (rack, str(product), str(number), count, an_racks),
+                ]
         for products in result.values():
             products.sort(key=lambda x: x[2])
         print(result)
