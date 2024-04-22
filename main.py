@@ -10,8 +10,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("orders", type=str, help="1,2,3")
     orders = parser.parse_args().orders
-    v = View(orders.split(","))
-    print(v)
+    try:
+        v = View(orders.split(","))
+        print(v)
+    except:
+        print("Ошибка!")
 
 
 if __name__ == "__main__":

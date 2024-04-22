@@ -1,348 +1,92 @@
 """Модуль c описанием моделей БД для работы приложения."""
 
-from abc import ABC, abstractmethod
-from typing import Literal
+from sqlalchemy import ForeignKey, PrimaryKeyConstraint, create_engine
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    relationship,
+    sessionmaker,
+)
 
-from database import Database
-from settings import db
+from settings import (
+    POSTGRES_DB,
+    POSTGRES_HOST,
+    POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USER,
+)
 
+engine = create_engine(
+    f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}"
+    f"@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}")
 
-class BaseModel(ABC):
-    """Базовый класс модели."""
+session_maker = sessionmaker(bind=engine)
 
-    @staticmethod
-    @abstractmethod
-    def get_by(field: str, value: int | str) -> "BaseModel":
-        """Метод для получения экземляра модели из базы.
 
-        Args:
-        ----
-            field (str): название поля.
-            value (int | str): значение поля.
+class Base(DeclarativeBase):
+    __abstract__ = True
 
-        Returns:
-        -------
-            BaseModel: экземпляр модели из базы.
 
-        """
+class Rack(Base):
+    __tablename__ = "rack"
 
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(index=True, unique=True)
 
-class BaseModelLink(ABC):
-    """Базовый класс модели связи."""
+    racks_product_links: Mapped[list["RackProductLink"]] = relationship(
+        "RackProductLink", back_populates="rack")
 
-    @staticmethod
-    @abstractmethod
-    def get_all_by(field: str, value: int | str) -> list["BaseModel"]:
-        """Метод для получения экземляра модели из базы.
 
-        Args:
-        ----
-            field (str): название поля.
-            value (int | str): значение поля.
+class Order(Base):
+    __tablename__ = "order"
 
-        Returns:
-        -------
-            list[BaseModel]: список соответствующих экземпляров модели из базы.
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_number: Mapped[int] = mapped_column(index=True, unique=True)
+    consumer_name: Mapped[str]
 
-        """
+    orders_product_links: Mapped[list["OrderProductLink"]] = relationship(
+        "OrderProductLink", back_populates="order")
 
 
-class Rack(BaseModel):
-    """Класс, представлющий стеллаж."""
-
-    db: Database = db
-
-    def __init__(self: "Rack", id_: int, name: str) -> None:
-        """Конструктор.
-
-        Args:
-        ----
-            self (Rack): сам экземпляр.
-            id_ (int): id из базы.
-            name (str): name из базы.
-
-        """
-        self.id = id_
-        self.name = name
-
-    @staticmethod
-    def get_by(field: Literal["id", "name"], value: int | str) -> "Rack":
-        """Получить по названию поля и значению запись из БД.
-
-        Args:
-        ----
-            field (Literal["id", "name"]): название поля строкой на выбор.
-            value (int | str): значение поля.
-
-        Returns:
-        -------
-            Rack: сам экземляр полученной модели.
+class Product(Base):
+    __tablename__ = "product"
 
-        """
-        sql_command = f"""
-            SELECT id, name
-            FROM rack
-            WHERE {field} = %s
-        """  # noqa: S608
-        with Rack.db() as conn:
-            cur = conn.cursor()
-            cur.execute(sql_command, (value,))
-            data = cur.fetchone()
-            return Rack(*data)
-
-    def __str__(self: "Rack") -> str:
-        """Строковое представление.
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(index=True)
+    article: Mapped[int] = mapped_column(index=True, unique=True)
 
-        Args:
-        ----
-            self (Rack): стеллаж.
+    orders_product_links: Mapped[list["OrderProductLink"]] = relationship(
+        "OrderProductLink", back_populates="product")
 
-        Returns:
-        -------
-            str: строковое представление.
-
-        """
-        return f"Стеллаж {self.name}"
-
-
-class Order(BaseModel):
-    """Класс, представлющий заказ."""
-
-    db: Database = db
-
-    def __init__(
-        self: "Order",
-        id_: int,
-        order_number: int,
-        consumer_name: str,
-    ) -> None:
-        """Конструктор.
-
-        Args:
-        ----
-            self (Rack): сам экземпляр.
-            id_ (int): id из базы.
-            order_number (int): номер заказа.
-            consumer_name (str): имя покупателя из базы.
-
-        """
-        self.id = id_
-        self.order_number = order_number
-        self.consumer_name = consumer_name
-
-    @staticmethod
-    def get_by(field: Literal["id", "order_number"], value: int) -> "Order":
-        """Получить по названию поля и значению запись из БД.
-
-        Args:
-        ----
-            field (Literal["id", "order_number"]): название
-            поля строкой на выбор.
-            value (int): значение поля.
-
-        Returns:
-        -------
-            Rack: сам экземляр полученной модели.
-
-        """
-        sql_command = f"""
-            SELECT id, order_number, consumer_name
-            FROM ordert
-            WHERE {field} = %s
-        """  # noqa: S608
-        with Order.db() as conn:
-            cur = conn.cursor()
-            cur.execute(sql_command, (value,))
-            data = cur.fetchone()
-            return Order(*data)
-
-    def __str__(self: "Order") -> str:
-        """Строковое представление.
-
-        Args:
-        ----
-            self (Order): заказ.
-
-        Returns:
-        -------
-            str: строковое представление.
-
-        """
-        return f"Заказ №{self.order_number}"
-
-
-class Product(BaseModel):
-    """Класс, представлющий товар."""
-
-    db: Database = db
-
-    def __init__(self: "Product", id_: int, name: str, article: int) -> None:
-        """Конструктор.
-
-        Args:
-        ----
-            self (Rack): сам экземпляр.
-            id_ (int): id из базы.
-            name (str): название товара.
-            article (int): артикл товара в виде числа.
-
-        """
-        self.id = id_
-        self.name = name
-        self.article = article
-
-    @staticmethod
-    def get_by(field: Literal["id", "article"], value: int) -> "Order":
-        """Получить по названию поля и значению запись из БД.
-
-        Args:
-        ----
-            field (Literal["id", "order_number"]): название
-            поля строкой на выбор.
-            value (int): значение поля.
-
-        Returns:
-        -------
-            Product: сам экземляр полученной модели.
-
-        """
-        sql_command = f"""
-            SELECT id, name, article
-            FROM product
-            WHERE {field} = %s
-        """  # noqa: S608
-        with Product.db() as conn:
-            cur = conn.cursor()
-            cur.execute(sql_command, (value,))
-            data = cur.fetchone()
-            return Product(*data)
-
-    def __str__(self: "Product") -> str:
-        """Строковое представление.
-
-        Args:
-        ----
-            self (Product): товар.
-
-        Returns:
-        -------
-            str: строковое представление.
-
-        """
-        return f"Товар {self.name}"
-
-
-class OrderProductLink(BaseModelLink):
-    """Класс."""
-
-    db: Database = db
-
-    def __init__(
-        self: "OrderProductLink",
-        id_: int,
-        order_id: int,
-        product_id: int,
-        count: int,
-    ) -> None:
-        """Конструктор.
-
-        Args:
-        ----
-            self (Rack): сам экземпляр.
-            id_ (int): id из базы.
-            order_id (int): id соответвующего заказа.
-            product_id (int): id соответвующего товара.
-            count (int): количество соответствующих товаров в этом заказе.
-
-        """
-        self.id = id_
-        self.order_id = order_id
-        self.product_id = product_id
-        self.count = count
-
-    @staticmethod
-    def get_all_by(
-        field: Literal["order_id", "product_id"],
-        value: int,
-    ) -> list["OrderProductLink"]:
-        """Получить по названию поля и значению запись из БД.
-
-        Args:
-        ----
-            field (Literal["order_id", "product_id"]): название
-            поля строкой на выбор.
-            value (int): значение поля.
-
-        Returns:
-        -------
-            list[OrderProductLink]: список экземляров полученной модели.
-
-        """
-        sql_command = f"""
-            SELECT id, order_id, product_id, count
-            FROM order_product_link
-            WHERE {field} = %s
-        """  # noqa: S608
-        with OrderProductLink.db() as conn:
-            cur = conn.cursor()
-            cur.execute(sql_command, (value,))
-            data = cur.fetchall()
-            return [OrderProductLink(*row) for row in data]
-
-
-class RackProductLink(BaseModelLink):
-    """Класс."""
-
-    db: Database = db
-
-    def __init__(
-        self: "RackProductLink",
-        id_: int,
-        rack_id: int,
-        product_id: int,
-        main: bool,  # noqa: FBT001
-    ) -> None:
-        """Конструктор.
-
-        Args:
-        ----
-            self (Rack): сам экземпляр.
-            id_ (int): id из базы.
-            rack_id (int): id соответвующего стеллажа.
-            product_id (int): id соответвующего товара.
-            main (bool): является ли стеллаж главным для товара.
-
-        """
-        self.id = id_
-        self.rack_id = rack_id
-        self.product_id = product_id
-        self.main = main
-
-    @staticmethod
-    def get_all_by(
-        field: Literal["rack_id", "product_id"],
-        value: int,
-    ) -> list["RackProductLink"]:
-        """Получить по названию поля и значению запись из БД.
-
-        Args:
-        ----
-            field (Literal["rack_id", "product_id"]): название
-            поля строкой на выбор.
-            value (int): значение поля.
-
-        Returns:
-        -------
-            list[RackProductLink]: список экземляров полученной модели.
-
-        """
-        sql_command = f"""
-            SELECT id, rack_id, product_id, main
-            FROM rack_product_link
-            WHERE {field} = %s
-        """  # noqa: S608
-        with RackProductLink.db() as conn:
-            cur = conn.cursor()
-            cur.execute(sql_command, (value,))
-            data = cur.fetchall()
-            return [RackProductLink(*row) for row in data]
+    racks_product_links: Mapped[list["RackProductLink"]] = relationship(
+        "RackProductLink", back_populates="product")
+
+
+class OrderProductLink(Base):
+    __tablename__ = "order_product_link"
+    __table_args__ = (PrimaryKeyConstraint("order_id", "product_id"),)
+
+    count: Mapped[int]
+
+    order_id: Mapped[int] = mapped_column(ForeignKey("order.id"))
+    order: Mapped["Order"] = relationship("Order",
+                                          back_populates="orders_product_links")
+    product_id: Mapped[int] = mapped_column(ForeignKey("product.id"))
+    product: Mapped["Product"] = relationship("Product",
+                                              back_populates="orders_product_links")
+
+
+class RackProductLink(Base):
+    __tablename__ = "rack_product_link"
+    __table_args__ = (PrimaryKeyConstraint("rack_id", "product_id"),)
+
+    main: Mapped[bool]
+
+    rack_id: Mapped[int] = mapped_column(ForeignKey("rack.id"))
+    rack: Mapped["Rack"] = relationship("Rack",
+                                        back_populates="racks_product_links")
+
+    product_id: Mapped[int] = mapped_column(ForeignKey("product.id"))
+    product: Mapped["Product"] = relationship("Product",
+                                              back_populates="racks_product_links")
